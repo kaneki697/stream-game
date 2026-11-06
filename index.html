@@ -187,21 +187,25 @@
         };
 
         const totalPlatforms = 1000;
-        const platforms = [];
         const platformWidth = 120;
         const platformHeight = 20;
 
+        // Generar 1000 plataformas en orden ascendente visible
+        const platforms = [];
         for (let i = 0; i <= totalPlatforms; i++) {
-            const x = Math.sin(i * 0.3) * 180;
-            const y = -i * 70;
-            platforms.push({ x, y, width: platformWidth, height: platformHeight });
+            platforms.push({
+                index: i,
+                x: canvas.width / 2 - platformWidth / 2 + Math.sin(i * 0.3) * 150,
+                // Cada plataforma sube 65 píxeles de manera uniforme en pantalla
+                y: canvas.height - 150 - (i * 65)
+            });
         }
 
         const cat = {
             x: platforms[0].x + platformWidth / 2 - 20,
-            y: platforms[0].y - 40,
-            width: 40,
-            height: 40
+            y: platforms[0].y - 45,
+            targetX: platforms[0].x + platformWidth / 2 - 20,
+            targetY: platforms[0].y - 45
         };
 
         function movePlatforms(amount, intensityType) {
@@ -228,13 +232,18 @@
 
             currentPlatformEl.innerText = currentPlatform;
 
+            // Actualizar la posición de destino del gato de inmediato
+            const pTarget = platforms[currentPlatform];
+            cat.targetX = pTarget.x + platformWidth / 2 - 20;
+            cat.targetY = pTarget.y - 45;
+
             const emojis = animEmojis[intensityType] || animEmojis.up1;
             for (let i = 0; i < 20; i++) {
                 activeParticles.push({
                     x: cat.x + 20,
                     y: cat.y + 20,
-                    vx: (Math.random() - 0.5) * 12,
-                    vy: (Math.random() - 0.5) * 12,
+                    vx: (Math.random() - 0.5) * 10,
+                    vy: (Math.random() - 0.5) * 10,
                     emoji: emojis[Math.floor(Math.random() * emojis.length)],
                     life: 1.0
                 });
@@ -263,12 +272,14 @@
             ctx.roundRect(x, y, 40, 35, 10);
             ctx.fill();
 
+            // Orejas
             ctx.fillStyle = "#ee5253";
             ctx.beginPath();
             ctx.moveTo(x + 5, y); ctx.lineTo(x + 12, y - 12); ctx.lineTo(x + 18, y); ctx.fill();
             ctx.beginPath();
             ctx.moveTo(x + 22, y); ctx.lineTo(x + 28, y - 12); ctx.lineTo(x + 35, y); ctx.fill();
 
+            // Ojos
             ctx.fillStyle = "#ffffff";
             ctx.beginPath();
             ctx.arc(x + 12, y + 12, 5, 0, Math.PI * 2);
@@ -302,28 +313,26 @@
         function gameLoop() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            const targetPlatformObj = platforms[currentPlatform];
-            const targetX = targetPlatformObj.x + platformWidth / 2 - 20;
-            const targetY = targetPlatformObj.y - 40;
+            // Interpolación de movimiento del gato hacia su plataforma asignada
+            cat.x += (cat.targetX - cat.x) * 0.1;
+            cat.y += (cat.targetY - cat.y) * 0.1;
 
-            cat.x += (targetX - cat.x) * 0.08;
-            cat.y += (targetY - cat.y) * 0.08;
-
-            const cameraOffsetX = canvas.width / 2 - cat.x - 20;
-            const cameraOffsetY = canvas.height / 2 - cat.y - 20;
+            // Desplazamiento de cámara automático vertical para centrar al gato en la pantalla
+            const cameraOffsetY = canvas.height / 2 - cat.y;
 
             ctx.save();
-            ctx.translate(cameraOffsetX, cameraOffsetY);
+            ctx.translate(0, cameraOffsetY);
 
-            // Se renderizan todas las plataformas cerca de la vista
+            // Dibujar Plataformas
             for (let i = 0; i < platforms.length; i++) {
                 const p = platforms[i];
                 const screenY = p.y + cameraOffsetY;
-                
-                if (screenY > -150 && screenY < canvas.height + 150) {
+
+                // Renderizar solo las plataformas visibles en pantalla para optimizar rendimiento
+                if (screenY > -100 && screenY < canvas.height + 100) {
                     ctx.fillStyle = i === currentPlatform ? "#10ac84" : "#576574";
                     ctx.beginPath();
-                    ctx.roundRect(p.x, p.y, p.width, p.height, 5);
+                    ctx.roundRect(p.x, p.y, platformWidth, platformHeight, 5);
                     ctx.fill();
 
                     ctx.fillStyle = "#ffffff";
@@ -332,8 +341,10 @@
                 }
             }
 
+            // Dibujar Gato
             drawCat(cat.x, cat.y);
 
+            // Dibujar Partículas con Emojis
             for (let i = activeParticles.length - 1; i >= 0; i--) {
                 const pt = activeParticles[i];
                 pt.x += pt.vx;
@@ -350,8 +361,9 @@
 
             ctx.restore();
 
+            // Cartel de Suspensión
             if (isSuspended) {
-                ctx.fillStyle = "rgba(0,0,0,0.7)";
+                ctx.fillStyle = "rgba(0,0,0,0.75)";
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
 
                 ctx.fillStyle = "#ffdd59";
