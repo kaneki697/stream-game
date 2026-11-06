@@ -192,7 +192,7 @@
         const platformHeight = 20;
 
         for (let i = 0; i <= totalPlatforms; i++) {
-            const x = Math.sin(i * 0.3) * 200;
+            const x = Math.sin(i * 0.3) * 180;
             const y = -i * 70;
             platforms.push({ x, y, width: platformWidth, height: platformHeight });
         }
@@ -309,16 +309,18 @@
             cat.x += (targetX - cat.x) * 0.08;
             cat.y += (targetY - cat.y) * 0.08;
 
-            // Seguimiento fluido de la cámara en ambos ejes (X e Y)
-            const cameraOffsetX = canvas.width / 2 - (cat.x + 20);
-            const cameraOffsetY = canvas.height / 2 - (cat.y + 20);
+            const cameraOffsetX = canvas.width / 2 - cat.x - 20;
+            const cameraOffsetY = canvas.height / 2 - cat.y - 20;
 
             ctx.save();
             ctx.translate(cameraOffsetX, cameraOffsetY);
 
+            // Se renderizan todas las plataformas cerca de la vista
             for (let i = 0; i < platforms.length; i++) {
                 const p = platforms[i];
-                if (p.y + cameraOffsetY > -100 && p.y + cameraOffsetY < canvas.height + 100) {
+                const screenY = p.y + cameraOffsetY;
+                
+                if (screenY > -150 && screenY < canvas.height + 150) {
                     ctx.fillStyle = i === currentPlatform ? "#10ac84" : "#576574";
                     ctx.beginPath();
                     ctx.roundRect(p.x, p.y, p.width, p.height, 5);
