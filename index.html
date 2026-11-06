@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Juego Interactivo de Stream</title>
+    <style>
+        body {
+            margin: 0;
+            background: #111;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+        #gameCanvas {
+            background: #222;
+            border: 2px solid #555;
+        }
+        #info {
+            margin-top: 10px;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Reto de la Cima</h1>
+    <canvas id="gameCanvas" width="400" height="500"></canvas>
+    <div id="info">Altura: <span id="alturaText">0</span></div>
+
+    <!-- Librería de Twitch Chat -->
+    <script src="https://cdn.jsdelivr.net/npm/tmi.js@1.8.5/1.8.5/dist/tmi.min.js"></script>
+    
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        const alturaText = document.getElementById("alturaText");
+
+        // Posición del jugador (Eje Y dentro del canvas de 500px)
+        let playerY = 450;
+        let targetY = 450;
+
+        // Conexión al chat de Twitch (Reemplaza 'TU_CANAL_DE_TWITCH' con tu usuario real)
+        const client = new tmi.Client({
+            channels: [ 'kaner_sg' ]
+        });
+
+        client.connect();
+
+        // Eventos del chat
+        client.on('chat', (channel, userstate, message, self) => {
+            // Comentario: sube un poco
+            targetY -= 5;
+            if (targetY < 20) targetY = 20; // Límite de la cima
+        });
+
+        client.on('subscription', (channel, username, method, message, userstate) => {
+            // Suscripción: baja bastante
+            targetY += 60;
+            if (targetY > 450) targetY = 450;
+        });
+
+        // Bucle del juego para animar el movimiento suave
+        function gameLoop() {
+            // Suavizar el movimiento hacia la posición objetivo
+            playerY += (targetY - playerY) * 0.1;
+
+            // Limpiar pantalla
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Dibujar la cima (meta arriba)
+            ctx.fillStyle = "#00ffcc";
+            ctx.fillRect(150, 20, 100, 10);
+
+            // Dibujar al jugador (cuadrado rojo)
+            ctx.fillStyle = "#ff3366";
+            ctx.fillRect(185, playerY, 30, 30);
+
+            // Actualizar texto de altura
+            alturaText.innerText = Math.round(450 - playerY);
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        gameLoop();
+    </script>
+</body>
+</html>
