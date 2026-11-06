@@ -16,7 +16,6 @@
             overflow: hidden;
         }
         
-        /* Contenedores laterales para los letreros */
         .sidebar {
             width: 250px;
             background: #181829;
@@ -32,7 +31,6 @@
             border-left: 2px solid #2a2a40;
         }
         
-        /* Tarjetas / Carteles */
         .card {
             padding: 12px;
             border-radius: 8px;
@@ -48,7 +46,6 @@
         .card-orange{ background: linear-gradient(135deg, #ffa502, #eccc68); }
         .card-darkred{ background: linear-gradient(135deg, #b22222, #8b0000); }
 
-        /* Área central del juego */
         #game-container {
             flex: 1;
             display: flex;
@@ -71,7 +68,6 @@
             display: block;
         }
 
-        /* Marcador superior */
         #hud {
             position: absolute;
             top: 15px;
@@ -91,7 +87,6 @@
 </head>
 <body>
 
-    <!-- Panel Izquierdo: Acciones de Subida -->
     <div class="sidebar">
         <h3 style="color: #48dbfb; text-align: center; margin-bottom: 5px;">SUBIDA ⬆️</h3>
         <div class="card card-green">💬 Comentar: +2 Plataformas</div>
@@ -101,7 +96,6 @@
         <div class="card card-orange">🎁 Donación $16 - $30: +100 Plataformas</div>
     </div>
 
-    <!-- Contenedor del Juego -->
     <div id="game-container">
         <div id="hud">
             <h2>Plataforma: <span id="current-platform">0</span> / 1000</h2>
@@ -112,7 +106,6 @@
         </div>
     </div>
 
-    <!-- Panel Derecho: Acciones de Bajada -->
     <div class="sidebar sidebar-right">
         <h3 style="color: #ff6b6b; text-align: center; margin-bottom: 5px;">BAJADA ⬇️</h3>
         <div class="card card-red">👤 Nuevo Seguidor: -15 Plataformas</div>
@@ -122,18 +115,15 @@
         <div class="card card-darkred">🔥 Donación > $100: -500 Plataformas</div>
     </div>
 
-    <!-- Librería tmi.js para Twitch -->
     <script src="https://cdn.jsdelivr.net/npm/tmi.js@1.8.5/1.8.5/dist/tmi.min.js"></script>
 
     <script>
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
 
-        // Elementos HUD
         const currentPlatformEl = document.getElementById("current-platform");
         const completedGoalsEl = document.getElementById("completed-goals");
 
-        // Configuración de resolución dinámica
         function resizeCanvas() {
             canvas.width = canvas.parentElement.clientWidth;
             canvas.height = canvas.parentElement.clientHeight;
@@ -141,7 +131,6 @@
         window.addEventListener('resize', resizeCanvas);
         resizeCanvas();
 
-        // Audio Synth (Efectos de sonido generados por código)
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         
         function playSound(type) {
@@ -150,7 +139,6 @@
             const gain = audioCtx.createGain();
             osc.connect(gain);
             gain.connect(audioCtx.destination);
-
             const now = audioCtx.currentTime;
 
             if (type === 'up_small') {
@@ -184,14 +172,12 @@
             }
         }
 
-        // Estado del Juego
         let currentPlatform = 0;
         let completedGoals = 0;
         let isSuspended = false;
         let suspensionTimer = 0;
         let activeParticles = [];
 
-        // Emojis para 5 niveles de intensidad de animación
         const animEmojis = {
             up1: ['🐱', '✨', '🐾'],
             up2: ['🚀', '⭐', '💥'],
@@ -200,36 +186,29 @@
             down2: ['⚡', '🌧️', '💣']
         };
 
-        // Estructura de Plataformas (1000 plataformas generadas en zigzag hacia arriba)
         const totalPlatforms = 1000;
         const platforms = [];
         const platformWidth = 120;
         const platformHeight = 20;
 
         for (let i = 0; i <= totalPlatforms; i++) {
-            const x = 100 + (Math.sin(i * 0.5) * 0.35 + 0.4) * (window.innerWidth - 600);
-            const y = -i * 80;
+            const x = Math.sin(i * 0.3) * 200;
+            const y = -i * 70;
             platforms.push({ x, y, width: platformWidth, height: platformHeight });
         }
 
-        // Personaje Gato
         const cat = {
             x: platforms[0].x + platformWidth / 2 - 20,
             y: platforms[0].y - 40,
             width: 40,
-            height: 40,
-            vx: 0,
-            vy: 0,
-            isJumping: false
+            height: 40
         };
 
-        // Función para aplicar cambios de plataforma
         function movePlatforms(amount, intensityType) {
             if (isSuspended) return;
 
             let target = currentPlatform + amount;
 
-            // Límite de Victoria Superior
             if (target >= totalPlatforms) {
                 currentPlatform = totalPlatforms;
                 triggerSuspension(5, () => {
@@ -237,9 +216,7 @@
                     currentPlatform = 0;
                     completedGoalsEl.innerText = completedGoals;
                 });
-            } 
-            // Límite de Caída Inferior
-            else if (target < 0) {
+            } else if (target < 0) {
                 currentPlatform = 0;
                 triggerSuspension(4, () => {
                     if (completedGoals > 0) completedGoals--;
@@ -251,7 +228,6 @@
 
             currentPlatformEl.innerText = currentPlatform;
 
-            // Generar partículas con Emojis
             const emojis = animEmojis[intensityType] || animEmojis.up1;
             for (let i = 0; i < 20; i++) {
                 activeParticles.push({
@@ -264,7 +240,6 @@
                 });
             }
 
-            // Reproducir Sonido
             if (amount > 0) playSound(amount > 20 ? 'up_large' : 'up_small');
             else playSound(Math.abs(amount) > 20 ? 'down_large' : 'down_small');
         }
@@ -282,29 +257,18 @@
             }, 1000);
         }
 
-        // Dibujar Personaje Tipo Gato
         function drawCat(x, y) {
-            // Cuerpo
             ctx.fillStyle = "#ff9f43";
             ctx.beginPath();
             ctx.roundRect(x, y, 40, 35, 10);
             ctx.fill();
 
-            // Orejas
             ctx.fillStyle = "#ee5253";
             ctx.beginPath();
-            ctx.moveTo(x + 5, y);
-            ctx.lineTo(x + 12, y - 12);
-            ctx.lineTo(x + 18, y);
-            ctx.fill();
-
+            ctx.moveTo(x + 5, y); ctx.lineTo(x + 12, y - 12); ctx.lineTo(x + 18, y); ctx.fill();
             ctx.beginPath();
-            ctx.moveTo(x + 22, y);
-            ctx.lineTo(x + 28, y - 12);
-            ctx.lineTo(x + 35, y);
-            ctx.fill();
+            ctx.moveTo(x + 22, y); ctx.lineTo(x + 28, y - 12); ctx.lineTo(x + 35, y); ctx.fill();
 
-            // Ojos
             ctx.fillStyle = "#ffffff";
             ctx.beginPath();
             ctx.arc(x + 12, y + 12, 5, 0, Math.PI * 2);
@@ -316,63 +280,42 @@
             ctx.arc(x + 12, y + 12, 2.5, 0, Math.PI * 2);
             ctx.arc(x + 28, y + 12, 2.5, 0, Math.PI * 2);
             ctx.fill();
-
-            // Hocico y Bigotes
-            ctx.strokeStyle = "#ffffff";
-            ctx.lineWidth = 1.5;
-            ctx.beginPath();
-            ctx.moveTo(x + 2, y + 18); ctx.lineTo(x + 10, y + 18);
-            ctx.moveTo(x + 2, y + 22); ctx.lineTo(x + 10, y + 20);
-            ctx.moveTo(x + 38, y + 18); ctx.lineTo(x + 30, y + 18);
-            ctx.moveTo(x + 38, y + 22); ctx.lineTo(x + 30, y + 20);
-            ctx.stroke();
         }
 
-        // Conexión al Chat de Twitch
-        const client = new tmi.Client({
-            channels: [ 'kaner_sg' ]
-        });
-
+        const client = new tmi.Client({ channels: [ 'kaner_sg' ] });
         client.connect();
 
-        // Escuchar eventos del Chat
         client.on('chat', (channel, userstate, message, self) => {
-            // Comentario estándar
             movePlatforms(2, 'up1');
         });
 
         client.on('subscription', (channel, username, method, message, userstate) => {
-            // Suscripción
             movePlatforms(-30, 'down2');
         });
 
         client.on('cheer', (channel, userstate, message) => {
-            // Donación de Bits
             const bits = parseInt(userstate.bits, 10);
             if (bits < 500) movePlatforms(20, 'up2');
             else movePlatforms(100, 'up3');
         });
 
-        // Bucle Principal de Renderizado y Física
         function gameLoop() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Calcular posición suave del objetivo
             const targetPlatformObj = platforms[currentPlatform];
             const targetX = targetPlatformObj.x + platformWidth / 2 - 20;
             const targetY = targetPlatformObj.y - 40;
 
-            // Movimiento suave (Interpolación)
-            cat.x += (targetX - cat.x) * 0.1;
-            cat.y += (targetY - cat.y) * 0.1;
+            cat.x += (targetX - cat.x) * 0.08;
+            cat.y += (targetY - cat.y) * 0.08;
 
-            // Desplazamiento de cámara para mantener al gato centrado verticalmente
-            const cameraOffsetY = canvas.height / 2 - cat.y;
+            // Seguimiento fluido de la cámara en ambos ejes (X e Y)
+            const cameraOffsetX = canvas.width / 2 - (cat.x + 20);
+            const cameraOffsetY = canvas.height / 2 - (cat.y + 20);
 
             ctx.save();
-            ctx.translate(0, cameraOffsetY);
+            ctx.translate(cameraOffsetX, cameraOffsetY);
 
-            // Dibujar Plataformas visibles
             for (let i = 0; i < platforms.length; i++) {
                 const p = platforms[i];
                 if (p.y + cameraOffsetY > -100 && p.y + cameraOffsetY < canvas.height + 100) {
@@ -381,17 +324,14 @@
                     ctx.roundRect(p.x, p.y, p.width, p.height, 5);
                     ctx.fill();
 
-                    // Número de plataforma
                     ctx.fillStyle = "#ffffff";
                     ctx.font = "bold 12px Arial";
                     ctx.fillText(i, p.x + 10, p.y + 14);
                 }
             }
 
-            // Dibujar Gato
             drawCat(cat.x, cat.y);
 
-            // Dibujar Partículas con Emojis
             for (let i = activeParticles.length - 1; i >= 0; i--) {
                 const pt = activeParticles[i];
                 pt.x += pt.vx;
@@ -408,7 +348,6 @@
 
             ctx.restore();
 
-            // Cartel de Suspensión (Victoria o Caída)
             if (isSuspended) {
                 ctx.fillStyle = "rgba(0,0,0,0.7)";
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
